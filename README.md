@@ -30,8 +30,7 @@ brew install yt-dlp figlet
 
 **On Windows:**
 
-- Install WSL and follow the Linux instructions, or
-- Download /dist/yt-dlp.exe and place it in a folder in your PATH, or get it from releases.
+- Install WSL and follow the Linux instructions
 
 One liner that does everythin for you lazy people
 `git clone https://github.com/cxdzd/yttool.git && cd yttool && chmod +x yttool.sh && sudo apt update && sudo apt install -y yt-dlp figlet && ./yttool.sh`
