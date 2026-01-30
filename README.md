@@ -1,5 +1,7 @@
 # yttool
 
+> Website in development
+
 yttool is a simple command-line tool to download YouTube videos, audio, or transcripts. You can also set custom filenames for your downloads.
 
 ## Features
