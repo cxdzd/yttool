@@ -10,8 +10,8 @@ read -p "Output filename (without extension, leave blank for default): " filenam
 
 echo "1. Download video"
 echo "2. Download audio"
-echo "3. Download transcript"
-echo "4. Download transcript without timestamp"
+echo "3. Download transcript (VTT)"
+echo "4. Download transcript (TXT)"
 echo "5. Quit"
 
 read -p "What do you want to do: " choice
@@ -24,6 +24,7 @@ case $choice in
     yt-dlp -o "${filename}.%(ext)s" "$url"
   fi
   ;;
+
 2)
   if [ -z "$filename" ]; then
     yt-dlp -x --audio-format mp3 "$url"
@@ -31,24 +32,38 @@ case $choice in
     yt-dlp -x --audio-format mp3 -o "${filename}.%(ext)s" "$url"
   fi
   ;;
+
 3)
   if [ -z "$filename" ]; then
-    yt-dlp --write-subs --write-auto-sub --sub-format "vtt" --skip-download "$url"
+    yt-dlp --write-subs --write-auto-subs --sub-format vtt --skip-download "$url"
   else
-    yt-dlp --write-subs --write-auto-sub --sub-format "vtt" --skip-download -o "${filename}.%(ext)s" "$url"
+    yt-dlp --write-subs --write-auto-subs --sub-format vtt --skip-download \
+      -o "${filename}.%(ext)s" "$url"
   fi
   ;;
+
 4)
   if [ -z "$filename" ]; then
-    yt-dlp --write-subs --write-auto-sub --sub-format "plain" --skip-download "$url"
+    yt-dlp --write-subs --write-auto-subs --sub-format vtt --skip-download "$url"
+    for vtt in *.vtt; do
+      [ -f "$vtt" ] && ~/tools/sub2txt.py --file "$vtt"
+    done
   else
-    yt-dlp --write-subs --write-auto-sub --sub-format "plain" --skip-download -o "${filename}.%(ext)s" "$url"
+    yt-dlp --write-subs --write-auto-subs --sub-format vtt --skip-download \
+      -o "${filename}.%(ext)s" "$url"
+
+    for vtt in "${filename}"*.vtt; do
+      [ -f "$vtt" ] && ./sub2text.py --file "$vtt"
+    done
+    rm -f *.vtt
   fi
   ;;
+
 5)
   echo "Goodbye"
   exit 0
   ;;
+
 *)
   echo "Invalid option"
   ;;
