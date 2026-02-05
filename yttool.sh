@@ -11,7 +11,7 @@ read -p "Output filename (without extension, leave blank for default): " filenam
 echo "1. Download video"
 echo "2. Download audio"
 echo "3. Download transcript (VTT)"
-echo "4. Download transcript (TXT)"
+echo "4. Download transcript (TXT, grammar corrected)"
 echo "5. Quit"
 
 read -p "What do you want to do: " choice
@@ -24,7 +24,6 @@ case $choice in
     yt-dlp -o "${filename}.%(ext)s" "$url"
   fi
   ;;
-
 2)
   if [ -z "$filename" ]; then
     yt-dlp -x --audio-format mp3 "$url"
@@ -32,38 +31,46 @@ case $choice in
     yt-dlp -x --audio-format mp3 -o "${filename}.%(ext)s" "$url"
   fi
   ;;
-
 3)
   if [ -z "$filename" ]; then
     yt-dlp --write-subs --write-auto-subs --sub-format vtt --skip-download "$url"
   else
-    yt-dlp --write-subs --write-auto-subs --sub-format vtt --skip-download \
-      -o "${filename}.%(ext)s" "$url"
+    yt-dlp --write-subs --write-auto-subs --sub-format vtt --skip-download -o "${filename}.%(ext)s" "$url"
   fi
   ;;
-
 4)
   if [ -z "$filename" ]; then
     yt-dlp --write-subs --write-auto-subs --sub-format vtt --skip-download "$url"
+  else
+    yt-dlp --write-subs --write-auto-subs --sub-format vtt --skip-download -o "${filename}.%(ext)s" "$url"
+  fi
+
+  if [ -z "$filename" ]; then
     for vtt in *.vtt; do
-      [ -f "$vtt" ] && ~/tools/sub2txt.py --file "$vtt"
+      [ -f "$vtt" ] && python3 ./sub2txt.py --file "$vtt"
     done
   else
-    yt-dlp --write-subs --write-auto-subs --sub-format vtt --skip-download \
-      -o "${filename}.%(ext)s" "$url"
-
     for vtt in "${filename}"*.vtt; do
-      [ -f "$vtt" ] && ./sub2text.py --file "$vtt"
+      [ -f "$vtt" ] && python3 ./sub2txt.py --file "$vtt"
     done
-    rm -f *.vtt
   fi
-  ;;
 
+  if [ -z "$filename" ]; then
+    for txt in *.txt; do
+      [ -f "$txt" ] && python3 ./grammarcorrect.py "$txt"
+    done
+  else
+    for txt in "${filename}"*.txt; do
+      [ -f "$txt" ] && python3 ./grammarcorrect.py "$txt"
+    done
+  fi
+
+  rm -f *.vtt
+  ;;
 5)
   echo "Goodbye"
   exit 0
   ;;
-
 *)
   echo "Invalid option"
   ;;
