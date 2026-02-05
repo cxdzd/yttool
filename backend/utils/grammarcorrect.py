@@ -40,6 +40,7 @@ def download_transcript(url, output):
 
     vtt_files = glob.glob("temp*.vtt")
     if not vtt_files:
+        print("No transcript available for this video.")
         return
 
     with open(vtt_files[0], "r", encoding="utf-8") as f:
@@ -47,39 +48,30 @@ def download_transcript(url, output):
 
     os.remove(vtt_files[0])
 
-    text = sub2txt(vtt)
-    text = grammarcorrect(text)
+    text = vtt_to_text(vtt)
+    text = grammar_correct(text)
 
     with open(output + ".txt", "w", encoding="utf-8") as f:
         f.write(text)
+    print(f"Transcript saved to {output}.txt")
 
-def sub2txt(vtt):
+def vtt_to_text(vtt):
     lines = vtt.splitlines()
     cleaned = []
 
     for line in lines:
         line = line.strip()
-        if not line:
-            continue
-        if "-->" in line:
-            continue
-        if line.isdigit():
-            continue
-        if line.startswith("WEBVTT"):
+        if not line or line.isdigit() or "-->" in line or line.startswith("WEBVTT"):
             continue
         cleaned.append(line)
 
     text = re.sub(r"\s+", " ", " ".join(cleaned))
     sentences = re.split(r"(?<=[.!?]) +", text)
-
-    paragraphs = []
-    for i in range(0, len(sentences), 4):
-        paragraphs.append(" ".join(sentences[i:i + 4]))
-
+    paragraphs = [" ".join(sentences[i:i+4]) for i in range(0, len(sentences), 4)]
     return "\n\n".join(paragraphs)
 
-def grammarcorrect(text):
-    chunks = chunk_words(text, 500)
+def grammar_correct(text):
+    chunks = chunk_text(text, 500)
     corrected = []
 
     for chunk in chunks:
@@ -98,25 +90,25 @@ def grammarcorrect(text):
             start = match["offset"] + offset
             length = match["length"]
             replacement = match["replacements"][0]["value"]
-            chunk = chunk[:start] + replacement + chunk[start + length:]
+            chunk = chunk[:start] + replacement + chunk[start+length:]
             offset += len(replacement) - length
 
         corrected.append(chunk)
 
     return "\n\n".join(corrected)
 
-def chunk_words(text, size):
+def chunk_text(text, size):
     words = text.split()
-    return [" ".join(words[i:i + size]) for i in range(0, len(words), size)]
+    return [" ".join(words[i:i+size]) for i in range(0, len(words), size)]
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Download YouTube video, audio, or transcript")
     parser.add_argument("url")
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("-v", action="store_true")
-    group.add_argument("-a", action="store_true")
-    group.add_argument("-t", action="store_true")
-    parser.add_argument("-o", "--output", default="output")
+    group.add_argument("-v", action="store_true", help="Download video")
+    group.add_argument("-a", action="store_true", help="Download audio")
+    group.add_argument("-t", action="store_true", help="Download transcript")
+    parser.add_argument("-o", "--output", default="output", help="Output filename without extension")
     args = parser.parse_args()
 
     if args.v:
